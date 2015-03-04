@@ -40,6 +40,7 @@ public class ShowList extends Activity {
 	private ListView list;
 	private MyAdapter adapter;
 	private ProgressBar bar;
+	private List<List<String>> value;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +49,9 @@ public class ShowList extends Activity {
 		
 		list = (ListView) findViewById(R.id.result_list);
 		bar = (ProgressBar) findViewById(R.id.progressBar);
+		value = new ArrayList<List<String>>();
+		adapter = new MyAdapter(getApplicationContext(), value);
+		list.setAdapter(adapter);
 		
 		if(savedInstanceState == null){
 			FetchDataTask dataTask = new FetchDataTask();
@@ -179,8 +183,9 @@ public class ShowList extends Activity {
 		protected void onPostExecute(List<List<String>> result) {
 			// TODO Auto-generated method stub
 			if(result != null){
-				adapter = new MyAdapter(getApplicationContext(), result);
-				list.setAdapter(adapter);
+				value.clear();
+				value.addAll(result);
+				adapter.notifyDataSetChanged();
 				bar.setVisibility(View.GONE);
 			}
 		}

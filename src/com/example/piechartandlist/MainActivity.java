@@ -114,6 +114,7 @@ public class MainActivity extends Activity {
         series.setSelectionMode(Series.SelectionMode.POINT_SINGLE);
         // The value represents the angle in radians in an anti-clockwise direction
         series.setSelectedPosition(50.0f);
+        series.setDataAdapter(dataAdapter);
         shinobiChart.addSeries(series);
 
         // Apply styling to the Pie Series
@@ -215,7 +216,6 @@ public class MainActivity extends Activity {
 				dataAdapter.add(new DataPoint<String, Double>(result[0], Double.parseDouble(result[0])));
 	            dataAdapter.add(new DataPoint<String, Double>(result[1], Double.parseDouble(result[1])));
 	            dataAdapter.add(new DataPoint<String, Double>(result[2], Double.parseDouble(result[2])));
-	            series.setDataAdapter(dataAdapter);
 
 	            bar.setVisibility(View.GONE);
 			}

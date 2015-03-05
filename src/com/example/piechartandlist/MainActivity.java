@@ -30,6 +30,7 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.graphics.Color;
 
+import com.example.piechartandlist.FetchDataTaskPie.AsyncResponseListener;
 import com.shinobicontrols.charts.ChartFragment;
 import com.shinobicontrols.charts.DataAdapter;
 import com.shinobicontrols.charts.DataPoint;
@@ -40,7 +41,7 @@ import com.shinobicontrols.charts.Series;
 import com.shinobicontrols.charts.ShinobiChart;
 import com.shinobicontrols.charts.SimpleDataAdapter;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements AsyncResponseListener{
 	private DataAdapter<String, Double> dataAdapter;
 	private PieSeries series;
 	private ProgressBar bar;
@@ -50,18 +51,16 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		// Create new pie chart only first time
+		initialPieChart();
 		
-        if (savedInstanceState == null) {
-        	// Get color data info
-    		FetchDataTask dataTask = new FetchDataTask();
-    		dataTask.execute();
-    		
-    		// Create new pie chart only first time
-        	initialPieChart();
-        }
-        
-        bar = (ProgressBar) findViewById(R.id.progressBar);
+		bar = (ProgressBar) findViewById(R.id.progressBar);
         Button getList = (Button) findViewById(R.id.my_list);
+        
+        // Get color data info
+ 		FetchDataTaskPie dataTask = new FetchDataTaskPie(this);
+ 		dataTask.execute();
+        
         getList.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -89,7 +88,7 @@ public class MainActivity extends Activity {
 		if (id == R.id.action_refreshing) {
 			bar.setVisibility(View.VISIBLE);
 			// Update color data info
-    		FetchDataTask dataTask = new FetchDataTask();
+    		FetchDataTaskPie dataTask = new FetchDataTaskPie(this);
     		dataTask.execute();
 			return true;
 		}
@@ -141,85 +140,14 @@ public class MainActivity extends Activity {
         });
         series.setSelectedStyle(selectedSeriesStyle);
 	}
-	
-	public class FetchDataTask extends AsyncTask<Void, Void, String[]> {
 
-        private final String LOG_TAG = FetchDataTask.class.getSimpleName();
-        
-        private String[] getDataFromJson(String jsonResult) throws JSONException{
-        	String[] colorResult = new String[3];//order green yellow red
-        	JSONObject object = new JSONObject(jsonResult);
-        	JSONObject redObject = object.getJSONObject("hits").getJSONObject("health").getJSONObject("red");
-        	JSONObject greenObject = object.getJSONObject("hits").getJSONObject("health").getJSONObject("green");
-        	JSONObject yellowObject = object.getJSONObject("hits").getJSONObject("health").getJSONObject("yellow");
-        	colorResult[2] = redObject.getString("total_hits");
-        	colorResult[0] = greenObject.getString("total_hits");
-        	colorResult[1] = yellowObject.getString("total_hits");
-        	
-        	
-        	return colorResult;
-        }
-        
-
-		@Override
-		protected String[] doInBackground(Void... params) {
-			android.os.Debug.waitForDebugger();
-			InputStream inputStream = null;
-	        String jsonResult = "";
-	        // create HttpClient
-	        HttpClient httpClient = new DefaultHttpClient();
-	        String uri = "https://appem.totango.com/api/v1/search/accounts/health_dist";
-	        HttpPost httpPost = new HttpPost(uri);
-	        String body = "{\"terms\":[{\"type\":\"totango_user_scope\",\"is_one_of\":[\"mobile+testme@totango.com\"]}],\"group_fields\":[{\"type\":\"health\"}]}";
-	        
-	        // Encoding POST data
-	        try{
-	        	List<NameValuePair> nameValuePair = new ArrayList<NameValuePair>();
-	        	nameValuePair.add(new BasicNameValuePair("query", body));
-	        	httpPost.setEntity(new UrlEncodedFormEntity(nameValuePair));
-	        	httpPost.setHeader("app-token", "1a1c626e8cdca0a80ae61b73ee0a1909941ab3d7mobile+testme@totango.com");
-	        	httpPost.setHeader("Accept", "application/json, text/javascript, */*; q=0.01");
-	        	httpPost.setHeader("X-Requested-With", "XMLHttpRequest");
-			}  catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-	        
-	        // Make an HTTP POST request
-	        try {
-	            // make GET request to the given URL
-	            HttpResponse httpResponse = httpClient.execute(httpPost);
-	            
-	            // Transfer the response body JSON file to string
-	            HttpEntity responseEntity = httpResponse.getEntity();
-	            if(responseEntity!=null) {
-	                jsonResult = EntityUtils.toString(responseEntity);
-	                Log.e(LOG_TAG, jsonResult);
-	            }
-	        } catch (Exception e) {
-	        	e.printStackTrace();
-	        }
-	        
-	        try{
-	        	return getDataFromJson(jsonResult);
-	        } catch(JSONException e){
-	        	e.printStackTrace();
-	        }
-	        
-			return null;
-		}
-		
-		@Override
-		protected void onPostExecute(String result[]) {
-			// TODO Auto-generated method stub
-			if(result != null){
-				dataAdapter.clear();
-				dataAdapter.add(new DataPoint<String, Double>(result[0], Double.parseDouble(result[0])));
-	            dataAdapter.add(new DataPoint<String, Double>(result[1], Double.parseDouble(result[1])));
-	            dataAdapter.add(new DataPoint<String, Double>(result[2], Double.parseDouble(result[2])));
-
-	            bar.setVisibility(View.GONE);
-			}
-		}
-        
+	@Override
+	public void fetchDataPieFinish(String[] result) {
+		dataAdapter.clear();
+		dataAdapter.add(new DataPoint<String, Double>(result[0], Double.parseDouble(result[0])));
+        dataAdapter.add(new DataPoint<String, Double>(result[1], Double.parseDouble(result[1])));
+        dataAdapter.add(new DataPoint<String, Double>(result[2], Double.parseDouble(result[2])));
+        bar.setVisibility(View.GONE);
 	}
+	
 }

@@ -17,20 +17,37 @@ import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.example.piechartandlist.PLContract.PieEntry;
 
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.util.Log;
 
 public class FetchDataTaskPie extends AsyncTask<Void, Void, String[]>{
 	private final String LOG_TAG = FetchDataTaskPie.class.getSimpleName();
 	private AsyncResponseListener listener;
+	private PLDbHelper myDbHelper;
+	private Context context;
 	
 	public interface AsyncResponseListener{
 		void fetchDataPieFinish(String[] result);
 	}
 	
-	public FetchDataTaskPie(AsyncResponseListener listener){
+	public FetchDataTaskPie(Context context, AsyncResponseListener listener){
 		this.listener = listener;
+		this.context = context;
+	}
+	
+	private void addColorToDb(String[] colorResult){
+		myDbHelper = new PLDbHelper(context);
+		myDbHelper.deleteAllPie();
+		myDbHelper.addColorInfo(colorResult);
+		
+		myDbHelper.getPieTableInfo();
+		
 	}
 
 	private String[] getDataFromJson(String jsonResult) throws JSONException{
@@ -43,7 +60,7 @@ public class FetchDataTaskPie extends AsyncTask<Void, Void, String[]>{
     	colorResult[0] = greenObject.getString("total_hits");
     	colorResult[1] = yellowObject.getString("total_hits");
     	
-    	
+    	addColorToDb(colorResult);
     	return colorResult;
     }
     

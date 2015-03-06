@@ -33,6 +33,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,6 +44,7 @@ public class ShowList extends Activity implements AsyncResponseListener{
 	private MyAdapter adapter;
 	private ProgressBar bar;
 	private List<List<String>> value;
+	private PLDbHelper myDbHelper;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -55,8 +57,17 @@ public class ShowList extends Activity implements AsyncResponseListener{
 		adapter = new MyAdapter(getApplicationContext(), value);
 		list.setAdapter(adapter);
 		
-		FetchDataTaskList dataTask = new FetchDataTaskList(this);
-		dataTask.execute();
+		myDbHelper = new PLDbHelper(this);
+		List<List<String>> result = myDbHelper.getListTableInfo();
+		if(result == null){
+			FetchDataTaskList dataTask = new FetchDataTaskList(this, this);
+			dataTask.execute();
+		} else {
+			value.clear();
+			value.addAll(result);
+			adapter.notifyDataSetChanged();
+			bar.setVisibility(View.GONE);
+		}
 		
 		list.setOnItemClickListener(new OnItemClickListener() {
 
@@ -67,6 +78,20 @@ public class ShowList extends Activity implements AsyncResponseListener{
 				Toast.makeText(getApplicationContext(), listitem.get(0), Toast.LENGTH_SHORT).show();
 				
 			}
+		});
+		list.setOnItemLongClickListener(new OnItemLongClickListener() {
+
+			@Override
+			public boolean onItemLongClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				myDbHelper.deletListItemByName(value.get(position).get(0));
+				List<List<String>> l = myDbHelper.getListTableInfo();
+				Log.e("listtable", l.size() + "");
+				value.remove(position);
+				adapter.notifyDataSetChanged();
+				return false;
+			}
+			
 		});
 	}
 
@@ -86,7 +111,7 @@ public class ShowList extends Activity implements AsyncResponseListener{
 		if (id == R.id.action_refreshing) {
 			bar.setVisibility(View.VISIBLE);
 			// Update data info
-			FetchDataTaskList dataTask = new FetchDataTaskList(this);
+			FetchDataTaskList dataTask = new FetchDataTaskList(this, this);
 			dataTask.execute();
 			return true;
 		}

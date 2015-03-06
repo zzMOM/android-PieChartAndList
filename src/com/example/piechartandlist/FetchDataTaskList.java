@@ -18,23 +18,37 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
 
 
 public class FetchDataTaskList extends AsyncTask<Void, Void, List<List<String>>> {
-	 private final String LOG_TAG = FetchDataTaskList.class.getSimpleName();
-	 
-	 private AsyncResponseListener listener;
+	private final String LOG_TAG = FetchDataTaskList.class.getSimpleName();
+	private PLDbHelper myDbHelper;
+	private AsyncResponseListener listener;
+	private Context context;
 		
-		public interface AsyncResponseListener{
-			void fetchDataPieFinish(List<List<String>> result);
+	public interface AsyncResponseListener{
+		void fetchDataPieFinish(List<List<String>> result);
+	}
+	
+	public FetchDataTaskList(Context context, AsyncResponseListener listener){
+		this.listener = listener;
+		this.context = context;
+	}
+	
+	private void addListToDb(List<List<String>> listResult){
+		myDbHelper = new PLDbHelper(context);
+		myDbHelper.deleteAllList();
+		for(int i = 0; i < listResult.size(); i++){
+			myDbHelper.addListInfo(listResult.get(i));
 		}
 		
-		public FetchDataTaskList(AsyncResponseListener listener){
-			this.listener = listener;
-		}
+		List<List<String>> test = myDbHelper.getListTableInfo();
+		Log.e("addcolor", test.size() + "");
+	}
      
      private List<List<String>> getDataFromJson(String jsonResult) throws JSONException{
      	List<List<String>> listResult = new ArrayList<List<String>>();
@@ -52,6 +66,7 @@ public class FetchDataTaskList extends AsyncTask<Void, Void, List<List<String>>>
      		listResult.add(listitem);
      		
      	}
+     	addListToDb(listResult);
      	return listResult;
      }
      

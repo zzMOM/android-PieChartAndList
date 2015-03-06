@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,6 +46,7 @@ public class MainActivity extends Activity implements AsyncResponseListener{
 	private DataAdapter<String, Double> dataAdapter;
 	private PieSeries series;
 	private ProgressBar bar;
+	private PLDbHelper myDbHelper;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -57,9 +59,19 @@ public class MainActivity extends Activity implements AsyncResponseListener{
 		bar = (ProgressBar) findViewById(R.id.progressBar);
         Button getList = (Button) findViewById(R.id.my_list);
         
-        // Get color data info
- 		FetchDataTaskPie dataTask = new FetchDataTaskPie(this);
- 		dataTask.execute();
+        myDbHelper = new PLDbHelper(this);
+        String[] result = myDbHelper.getPieTableInfo();
+        if(result == null){
+	        // Get color data info
+	 		FetchDataTaskPie dataTask = new FetchDataTaskPie(this, this);
+	 		dataTask.execute();
+        } else {
+        	dataAdapter.clear();
+    		dataAdapter.add(new DataPoint<String, Double>(result[0], Double.parseDouble(result[0])));
+            dataAdapter.add(new DataPoint<String, Double>(result[1], Double.parseDouble(result[1])));
+            dataAdapter.add(new DataPoint<String, Double>(result[2], Double.parseDouble(result[2])));
+            bar.setVisibility(View.GONE);
+        }
         
         getList.setOnClickListener(new OnClickListener() {
 			
@@ -88,7 +100,7 @@ public class MainActivity extends Activity implements AsyncResponseListener{
 		if (id == R.id.action_refreshing) {
 			bar.setVisibility(View.VISIBLE);
 			// Update color data info
-    		FetchDataTaskPie dataTask = new FetchDataTaskPie(this);
+    		FetchDataTaskPie dataTask = new FetchDataTaskPie(this, this);
     		dataTask.execute();
 			return true;
 		}
